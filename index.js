@@ -153,14 +153,26 @@ bot.onText(/^\d{10}$/, async (msg) => {
       "https://api.v2.pnr.railcore.tech/api/v1/pnr/status",
       {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+        },
         body: JSON.stringify({ pnr })
       }
     );
 
-    const json = await response.json();
+    const raw = await response.text();
 
-    // ❌ PNR NOT FOUND
+    // 🔍 DEBUG LOG (CHECK RAILWAY LOGS)
+    console.log("RAW API RESPONSE:", raw);
+
+    let json;
+    try {
+      json = JSON.parse(raw);
+    } catch {
+      return bot.sendMessage(chatId, "Details Not Found ❌");
+    }
+
     if (!json.success || !json.data) {
       return bot.sendMessage(chatId, "Details Not Found ❌");
     }
@@ -180,6 +192,7 @@ Seat no - ${coach}/${seats}
     bot.sendMessage(chatId, message, { parse_mode: "Markdown" });
 
   } catch (err) {
+    console.error("FETCH ERROR:", err);
     bot.sendMessage(chatId, "Details Not Found ❌");
   }
 });
@@ -187,4 +200,4 @@ Seat no - ${coach}/${seats}
 /* =========================
    BOT READY
 ========================= */
-console.log("🤖 Bot running successfully...");
+console.log("🤖 PNR Telegram Bot is running...");
